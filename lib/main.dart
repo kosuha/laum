@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
-import 'play.dart';
-import 'home.dart';
-import 'setting.dart';
+import 'PlayWidget.dart';
+import 'HomeWidget.dart';
+import 'SettingWidget.dart';
 
 void main() {
   runApp(MyApp());
