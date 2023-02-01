@@ -1,7 +1,8 @@
-import 'dart:html';
+import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_keyboard_size/flutter_keyboard_size.dart';
 
 class CalendarWidget extends StatefulWidget {
   @override
@@ -30,7 +31,13 @@ class _CalendarWidgetState extends State<CalendarWidget> {
   int yearTo = now.year;
   int monthTo = now.month;
 
-  final ScrollController _scrollController = ScrollController();
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -100,6 +107,12 @@ class _CalendarWidgetState extends State<CalendarWidget> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   GestureDetector dayContainer(Map<String, dynamic> dateMap) {
@@ -184,7 +197,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.9,
-      padding: EdgeInsets.fromLTRB(15, 10, 15, 50),
+      padding: EdgeInsets.fromLTRB(15, 10, 15, 10),
       width: double.infinity,
       decoration: BoxDecoration(
           color: Color(0xffffffff),
@@ -233,30 +246,40 @@ class _CalendarWidgetState extends State<CalendarWidget> {
           ),
           Expanded(
               child: ListView(
-            // controller: _scrollController,
+            controller: _scrollController,
             children: [
               Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: Color(0xfff2f2f2),
-                ),
-                margin: EdgeInsets.fromLTRB(96, 30, 96, 30),
+                alignment: Alignment.center,
+                padding: EdgeInsets.only(bottom: 40),
                 child: Container(
-                    // padding: EdgeInsets.symmetric(vertical: 24, horizontal: 14),
-                    width: 45,
-                    height: 68,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(50),
-                      border: Border.all(color: Color(0xff8b8b8b)),
-                    ),
-                    margin: EdgeInsets.fromLTRB(70, 100, 70, 100),
-                    child: Icon(
-                      CupertinoIcons.plus,
-                      color: Color(0xff000000),
-                    )),
+                  alignment: Alignment.center,
+                  width: 200,
+                  height: 265,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    color: Color(0xfff2f2f2),
+                  ),
+                  child: Container(
+                      alignment: Alignment.center,
+                      width: 45,
+                      height: 68,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(50),
+                        border: Border.all(color: Color(0xff8b8b8b)),
+                      ),
+                      child: Icon(
+                        CupertinoIcons.plus,
+                        color: Color(0xff000000),
+                      )),
+                ),
               ),
               Container(
                 child: CupertinoTextField(
+                  onTap: () {
+                    _scrollController.animateTo(120,
+                        duration: Duration(milliseconds: 500),
+                        curve: Curves.ease);
+                  },
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -301,8 +324,24 @@ class _CalendarWidgetState extends State<CalendarWidget> {
               ),
               Container(
                 margin: EdgeInsets.all(20),
-                child: CupertinoButton.filled(
-                    child: Text("기록하기"), onPressed: null),
+                child: CupertinoButton(
+                  padding: EdgeInsets.symmetric(vertical: 18),
+                  color: Color(0xff000000),
+                  borderRadius: BorderRadius.circular(50),
+                  onPressed: () {
+                    print("submit");
+                  },
+                  child: Text(
+                    "기록하기",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+              Container(
+                alignment: Alignment.center,
+                margin: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewInsets.bottom),
+                // height: MediaQuery.of(context).viewInsets.bottom,
               ),
             ],
           )),

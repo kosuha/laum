@@ -31,6 +31,7 @@ class MainWidget extends StatelessWidget {
     ];
 
     return CupertinoTabScaffold(
+        resizeToAvoidBottomInset: false,
         tabBar: CupertinoTabBar(
           items: items,
           activeColor: Color(0xff000000),
