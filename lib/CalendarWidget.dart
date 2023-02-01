@@ -1,3 +1,5 @@
+import 'dart:html';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -27,6 +29,8 @@ class _CalendarWidgetState extends State<CalendarWidget> {
   int month = now.month;
   int yearTo = now.year;
   int monthTo = now.month;
+
+  final ScrollController _scrollController = ScrollController();
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +77,7 @@ class _CalendarWidgetState extends State<CalendarWidget> {
 
     int rowsLength = dates.length ~/ 7;
     for (int i = 0; i < rowsLength; i++) {
-      List<Container> temps = [];
+      List<GestureDetector> temps = [];
       for (int j = 0; j < 7; j++) {
         temps.add(dayContainer(dates[i * 7 + j]));
       }
@@ -88,64 +92,30 @@ class _CalendarWidgetState extends State<CalendarWidget> {
         children: [
           Container(
             padding: EdgeInsets.fromLTRB(20, 30, 20, 30),
-            child: Column(
-              children: [
-                Container(
-                  alignment: Alignment.topLeft,
-                  child: Text(
-                    "$year",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                  ),
-                ),
-                Container(
-                  child: Row(children: [
-                    Container(
-                      child: Text(
-                        months[month - 1],
-                        style: TextStyle(
-                            fontSize: 28, fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                    CupertinoButton(
-                      padding: EdgeInsets.fromLTRB(5, 10, 5, 7),
-                      alignment: Alignment.bottomCenter,
-                      onPressed: calendarChangeButtonEvent,
-                      child: Icon(
-                        CupertinoIcons.calendar_today,
-                        color: Color(0xff777777),
-                      ),
-                    )
-                  ]),
-                ),
-              ],
-            ),
+            child: yearAndMonth(),
           ),
           Container(
-            child: Column(children: [
-              Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: weekdaysText(weekdays),
-                  ),
-                  Column(
-                    children: rows,
-                  )
-                ],
-              )
-            ]),
+            child: monthContent(rows),
           )
         ],
       ),
     );
   }
 
-  Container dayContainer(Map<String, dynamic> dateMap) {
+  GestureDetector dayContainer(Map<String, dynamic> dateMap) {
     int date = dateMap["day"];
     BoxDecoration boxDecoration = BoxDecoration(
         color: Color(0x158B95A1), borderRadius: BorderRadius.circular(50));
     TextStyle textStyle = TextStyle(
         color: Color(0xff8B95A1), fontSize: 16, fontWeight: FontWeight.w400);
+    bool isToday = (now.year == dateMap["year"] &&
+        now.month == dateMap["month"] &&
+        now.day == dateMap["day"]);
+    bool isYesterday =
+        (DateTime(dateMap["year"], dateMap["month"], dateMap["day"])
+                .isBefore(DateTime(now.year, now.month, now.day)) &&
+            DateTime(dateMap["year"], dateMap["month"], dateMap["day"])
+                .isAfter(DateTime(now.year, now.month, now.day - 2)));
 
     if (DateTime(dateMap["year"], dateMap["month"], dateMap["day"])
         .isAfter(now)) {
@@ -154,9 +124,8 @@ class _CalendarWidgetState extends State<CalendarWidget> {
           color: Color(0xff8B95A1), fontSize: 16, fontWeight: FontWeight.w400);
     }
 
-    if (now.year == dateMap["year"] &&
-        now.month == dateMap["month"] &&
-        now.day == dateMap["day"]) {
+    if (isToday) {
+      isToday = true;
       boxDecoration = BoxDecoration(
           color: Color(0xffffffff),
           borderRadius: BorderRadius.circular(50),
@@ -165,9 +134,8 @@ class _CalendarWidgetState extends State<CalendarWidget> {
           color: Color(0xff000000), fontSize: 16, fontWeight: FontWeight.w700);
     }
 
-    if (now.year == dateMap["year"] &&
-        now.month == dateMap["month"] &&
-        now.day - 1 == dateMap["day"]) {
+    if (isYesterday) {
+      isYesterday = true;
       boxDecoration = BoxDecoration(
           color: Color(0xffffffff),
           borderRadius: BorderRadius.circular(50),
@@ -181,17 +149,215 @@ class _CalendarWidgetState extends State<CalendarWidget> {
       textStyle = TextStyle(color: Color(0x008B95A1), fontSize: 16);
     }
 
-    return Container(
-      alignment: Alignment.center,
-      height: 75,
-      width: 50,
-      margin: EdgeInsets.all(1.0),
-      decoration: boxDecoration,
-      child: Text(
-        "$date",
-        style: textStyle,
+    return GestureDetector(
+      onTap: () {
+        if ((isYesterday || isToday) && dateMap["inMonth"]) {
+          showCupertinoModalPopup(
+              context: context,
+              builder: (BuildContext context) {
+                return Builder(builder: (BuildContext context) {
+                  return writeModalContainer(dateMap);
+                });
+              });
+        }
+      },
+      child: Container(
+        alignment: Alignment.center,
+        height: 75,
+        width: 50,
+        margin: EdgeInsets.all(1.0),
+        decoration: boxDecoration,
+        child: Text(
+          "$date",
+          style: textStyle,
+        ),
       ),
     );
+  }
+
+  Container writeModalContainer(Map<String, dynamic> dateMap) {
+    String monthString = months[dateMap["month"] - 1];
+    int date = dateMap["day"];
+    String weekday = weekdays[
+        DateTime(dateMap["year"], dateMap["month"], dateMap["day"]).weekday -
+            1];
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.9,
+      padding: EdgeInsets.fromLTRB(15, 10, 15, 50),
+      width: double.infinity,
+      decoration: BoxDecoration(
+          color: Color(0xffffffff),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      child: Column(
+        // mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Container(
+            alignment: Alignment.centerRight,
+            child: CupertinoButton(
+              child: Icon(
+                CupertinoIcons.xmark,
+                color: Color(0xff191919),
+              ),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+          Container(
+            alignment: Alignment.center,
+            child: Row(
+              children: [
+                Container(
+                  width: 6,
+                  height: 20,
+                  margin: EdgeInsets.only(left: 24, right: 11),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(50),
+                    color: Color(0xff000000),
+                  ),
+                ),
+                Container(
+                    child: Column(
+                  children: [
+                    Text(
+                      "$monthString $date, $weekday",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                )),
+              ],
+            ),
+          ),
+          Expanded(
+              child: ListView(
+            // controller: _scrollController,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: Color(0xfff2f2f2),
+                ),
+                margin: EdgeInsets.fromLTRB(96, 30, 96, 30),
+                child: Container(
+                    // padding: EdgeInsets.symmetric(vertical: 24, horizontal: 14),
+                    width: 45,
+                    height: 68,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(50),
+                      border: Border.all(color: Color(0xff8b8b8b)),
+                    ),
+                    margin: EdgeInsets.fromLTRB(70, 100, 70, 100),
+                    child: Icon(
+                      CupertinoIcons.plus,
+                      color: Color(0xff000000),
+                    )),
+              ),
+              Container(
+                child: CupertinoTextField(
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  placeholder: "제목을 입력해주세요.",
+                  placeholderStyle: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xffbdbdbd),
+                    backgroundColor: Color(0x00000000),
+                  ),
+                  maxLines: 1,
+                  maxLength: 30,
+                  padding: EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                      border:
+                          Border(bottom: BorderSide(color: Color(0xffe5e5e5)))),
+                ),
+              ),
+              Container(
+                child: CupertinoTextField(
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  cursorColor: Color(0xff555555),
+                  keyboardType: TextInputType.multiline,
+                  maxLines: 6,
+                  maxLength: 200,
+                  placeholder: "하루를 기록해주세요.",
+                  placeholderStyle: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xffbdbdbd),
+                    backgroundColor: Color(0x00000000),
+                  ),
+                  padding: EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                      border:
+                          Border(bottom: BorderSide(color: Color(0xffe5e5e5)))),
+                ),
+              ),
+              Container(
+                margin: EdgeInsets.all(20),
+                child: CupertinoButton.filled(
+                    child: Text("기록하기"), onPressed: null),
+              ),
+            ],
+          )),
+        ],
+      ),
+    );
+  }
+
+  Column yearAndMonth() {
+    return Column(
+      children: [
+        Container(
+          alignment: Alignment.topLeft,
+          child: Text(
+            "$year",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          ),
+        ),
+        Container(
+          child: Row(children: [
+            Container(
+              child: Text(
+                months[month - 1],
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
+              ),
+            ),
+            CupertinoButton(
+              padding: EdgeInsets.fromLTRB(5, 10, 5, 7),
+              alignment: Alignment.bottomCenter,
+              onPressed: calendarChangeButtonEvent,
+              child: Icon(
+                CupertinoIcons.calendar_today,
+                color: Color(0xff777777),
+              ),
+            )
+          ]),
+        ),
+      ],
+    );
+  }
+
+  Column monthContent(rows) {
+    return Column(children: [
+      Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: weekdaysText(weekdays),
+          ),
+          Column(
+            children: rows,
+          )
+        ],
+      )
+    ]);
   }
 
   List<Container> weekdaysText(List<String> weekdays) {
@@ -220,65 +386,70 @@ class _CalendarWidgetState extends State<CalendarWidget> {
         builder: (BuildContext context) {
           return StatefulBuilder(
               builder: (BuildContext context, StateSetter bottomState) {
-            return Container(
-              // height: 200,
-              padding: EdgeInsets.fromLTRB(15, 10, 15, 50),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                  color: Color(0xffffffff),
-                  borderRadius: BorderRadius.circular(16)),
-              child: Column(
-                // mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Container(
-                    alignment: Alignment.centerRight,
-                    // decoration: BoxDecoration(
-                    //     border: Border.all(color: Color(0xff000000))),
-                    child: CupertinoButton(
-                      child: Icon(
-                        CupertinoIcons.xmark,
-                        color: Color(0xff8b8b8b),
-                      ),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ),
-                  Container(
-                    // decoration: BoxDecoration(
-                    //     border: Border.all(color: Color(0xff000000))),
-                    padding: EdgeInsets.fromLTRB(0, 10, 0, 50),
-                    alignment: Alignment.center,
-                    child: Column(children: [
-                      Container(
-                        padding: EdgeInsets.fromLTRB(20, 0, 20, 10),
-                        margin: EdgeInsets.fromLTRB(10, 0, 10, 20),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: yearToChangeRow(bottomState),
-                        ),
-                      ),
-                      Column(
-                        children: monthsRow(months, bottomState),
-                      )
-                    ]),
-                  ),
-                  Container(
-                    height: 56,
-                    child: CupertinoButton(
-                        color: Color(0xff000000),
-                        minSize: MediaQuery.of(context).size.width,
-                        onPressed: () {
-                          month = monthTo;
-                          year = yearTo;
-                          Navigator.pop(context);
-                        },
-                        child: Text('확인')),
-                  ),
-                ],
-              ),
-            );
+            return calendarChangeModalContainer(context, bottomState);
           });
         });
+  }
+
+  Container calendarChangeModalContainer(
+      BuildContext context, StateSetter bottomState) {
+    return Container(
+      // height: 200,
+      padding: EdgeInsets.fromLTRB(15, 10, 15, 50),
+      width: double.infinity,
+      decoration: BoxDecoration(
+          color: Color(0xffffffff),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      child: Column(
+        // mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Container(
+            alignment: Alignment.centerRight,
+            // decoration: BoxDecoration(
+            //     border: Border.all(color: Color(0xff000000))),
+            child: CupertinoButton(
+              child: Icon(
+                CupertinoIcons.xmark,
+                color: Color(0xff8b8b8b),
+              ),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+          Container(
+            // decoration: BoxDecoration(
+            //     border: Border.all(color: Color(0xff000000))),
+            padding: EdgeInsets.fromLTRB(0, 10, 0, 50),
+            alignment: Alignment.center,
+            child: Column(children: [
+              Container(
+                padding: EdgeInsets.fromLTRB(20, 0, 20, 10),
+                margin: EdgeInsets.fromLTRB(10, 0, 10, 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: yearToChangeRow(bottomState),
+                ),
+              ),
+              Column(
+                children: monthsRow(months, bottomState),
+              )
+            ]),
+          ),
+          Container(
+            height: 56,
+            child: CupertinoButton(
+                color: Color(0xff000000),
+                minSize: MediaQuery.of(context).size.width,
+                onPressed: () {
+                  month = monthTo;
+                  year = yearTo;
+                  Navigator.pop(context);
+                },
+                child: Text('확인')),
+          ),
+        ],
+      ),
+    );
   }
 
   List<Row> monthsRow(List<String> months, StateSetter bottomState) {
