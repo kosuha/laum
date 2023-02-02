@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'WriteModalWidget.dart';
+import './WriteModal/WriteModalWidget.dart';
 
 class MonthBodyWidget extends StatelessWidget {
   const MonthBodyWidget(
