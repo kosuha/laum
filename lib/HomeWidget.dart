@@ -16,6 +16,7 @@ class _HomeWidgetState extends State<HomeWidget> {
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
+      resizeToAvoidBottomInset: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
