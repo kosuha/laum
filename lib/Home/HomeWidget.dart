@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
-import 'CalendarWidget.dart';
-import 'DailyWidget.dart';
+import './Calendar/CalendarWidget.dart';
+import './Daily/DailyWidget.dart';
 
 class HomeWidget extends StatefulWidget {
   @override
