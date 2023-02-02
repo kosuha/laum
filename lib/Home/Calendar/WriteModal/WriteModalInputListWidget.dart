@@ -37,9 +37,7 @@ class _WriteModalInputListWidgetState extends State<WriteModalInputListWidget> {
       return ListView(
         controller: _scrollController,
         children: [
-          WriteModalImageInputWidget(
-            titleText: '?',
-          ),
+          WriteModalImageInputWidget(),
           WriteModalTitleInputWidget(
             bottomState: bottomState,
             onTabEvent: onTabTitleInputEvent,

@@ -29,7 +29,8 @@ class _WriteModalWidgetState extends State<WriteModalWidget> {
 
   @override
   Widget build(BuildContext context) {
-    String titleText = "${widget.monthString} ${widget.date} ${widget.weekday}";
+    String titleText =
+        "${widget.monthString} ${widget.date}, ${widget.weekday}";
 
     return StatefulBuilder(
         builder: (BuildContext context, StateSetter bottomState) {

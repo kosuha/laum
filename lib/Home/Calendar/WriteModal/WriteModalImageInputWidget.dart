@@ -1,28 +1,52 @@
 import 'package:flutter/cupertino.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
-class WriteModalImageInputWidget extends StatelessWidget {
-  const WriteModalImageInputWidget({Key? key, required this.titleText})
-      : super(key: key);
+class WriteModalImageInputWidget extends StatefulWidget {
+  const WriteModalImageInputWidget({super.key});
 
-  final String titleText;
+  @override
+  State<WriteModalImageInputWidget> createState() =>
+      _WriteModalImageInputWidgetState();
+}
+
+class _WriteModalImageInputWidgetState
+    extends State<WriteModalImageInputWidget> {
+  final ImagePicker _picker = ImagePicker();
+  late PickedFile? pickedFile;
+  late File? f;
+
+  @override
+  void initState() {
+    super.initState();
+    f = null;
+  }
 
   @override
   Widget build(BuildContext context) {
+    BoxDecoration boxImageDeco = BoxDecoration(
+      borderRadius: BorderRadius.circular(20),
+      color: Color(0xfff2f2f2),
+    );
+    if (f != null) {
+      print("hi");
+      boxImageDeco = BoxDecoration(
+        image: DecorationImage(image: FileImage(f!)),
+        borderRadius: BorderRadius.circular(20),
+      );
+    }
     return Container(
       alignment: Alignment.center,
       padding: EdgeInsets.only(bottom: 40),
       child: GestureDetector(
         onTap: () {
-          print("pic");
+          _pickImage();
         },
         child: Container(
           alignment: Alignment.center,
           width: 200,
           height: 265,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: Color(0xfff2f2f2),
-          ),
+          decoration: boxImageDeco,
           child: Container(
               alignment: Alignment.center,
               width: 45,
@@ -38,5 +62,17 @@ class WriteModalImageInputWidget extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _pickImage() async {
+    // Navigator.pop(context);
+    XFile? imageFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+    );
+    if (imageFile != null) {
+      setState(() {
+        f = File(imageFile.path);
+      });
+    }
   }
 }
